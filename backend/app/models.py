@@ -1,5 +1,6 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from hmac import digest
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -20,7 +21,10 @@ class User(db.Model):
         self.password_hash = generate_password_hash(value)
 
     def check_password(self, value):
-        return check_password_hash(self.password_hash, value)
+        return isinstance(value, str) and len(value) <= 1024 and check_password_hash(self.password_hash, value)
+
+    def password_marker(self, secret):
+        return digest(secret.encode(), self.password_hash.encode(), "sha256").hex()
 
     def public(self):
         return {"id": self.id, "name": self.name, "email": self.email, "currency": self.currency}
@@ -79,6 +83,12 @@ class Budget(db.Model):
                 "amount": amount, "spent": spent, "remaining": amount - spent,
                 "utilization": round(spent / amount * 100, 1) if amount else 0,
                 "month": self.budget_month, "year": self.budget_year}
+
+
+class RevokedAccessToken(db.Model):
+    __tablename__ = "revoked_access_tokens"
+    jti = db.Column(db.String(36), primary_key=True)
+    expires_at = db.Column(db.BigInteger, nullable=False, index=True)
 
 
 class AIInsight(db.Model):

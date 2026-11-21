@@ -1,24 +1,24 @@
-databases:
-  - name: smartspend-db
-    databaseName: smartspend
-    plan: free
-
-services:
+﻿services:
   - type: web
     name: smartspend-api
     repo: https://github.com/ThatiSreeja/smartspend-app
+    branch: master
     runtime: python
-    plan: free
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: cd backend && gunicorn -w 2 -b 0.0.0.0:$PORT run:app
-    healthCheckPath: /api/health
+    plan: starter
+    autoDeployTrigger: "off"
+    buildCommand: python -m pip install -r backend/requirements.txt
+    preDeployCommand: cd backend && python -m flask --app run db upgrade
+    startCommand: cd backend && gunicorn --workers 2 --threads 2 --bind 0.0.0.0:$PORT run:app
+    healthCheckPath: /api/ready
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.1
+        value: 3.13.18
+      - key: SMARTSPEND_ENV
+        value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: smartspend-db
-          property: connectionString
+        sync: false
+      - key: RATELIMIT_STORAGE_URI
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: JWT_SECRET_KEY
@@ -29,19 +29,35 @@ services:
           type: web
           envVarKey: RENDER_EXTERNAL_URL
       - key: AUTO_CREATE_TABLES
-        value: "true"
+        value: "false"
+      - key: AI_SHARE_FINANCIAL_SUMMARIES
+        value: "false"
 
   - type: web
     name: smartspend
     repo: https://github.com/ThatiSreeja/smartspend-app
+    branch: master
     runtime: static
-    buildCommand: cd frontend && export npm_config_script_shell=/bin/sh && npm ci && npm run build
+    autoDeployTrigger: "off"
+    buildCommand: test -n "$VITE_RENDER_API_ORIGIN" && cd frontend && export npm_config_script_shell=/bin/sh && npm ci --include=dev && npm run build
     staticPublishPath: frontend/dist
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
     envVars:
+      - key: NODE_VERSION
+        value: "~22"
       - key: VITE_RENDER_API_ORIGIN
         fromService:
           name: smartspend-api

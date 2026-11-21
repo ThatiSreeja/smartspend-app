@@ -8,12 +8,12 @@ SmartSpend is a responsive personal finance application for managing income, exp
 - User-owned transactions with validation, search, filters, pagination, editing, deletion, and CSV export.
 - Income and expense categories, custom categories, monthly budgets, utilization and overspend warnings.
 - Dashboard totals, category breakdowns, monthly/yearly selection, and reports from SQL aggregates.
-- AI assistant that sees only authenticated-user aggregates, compares current and previous month, includes category/budget context, and returns a graceful fallback when no API key or provider is available.
+- AI assistant for general questions, personal finance, and mixed queries. The backend calculates account answers from the signed-in user's transactions and budgets.
 - Rate limits on authentication endpoints.
 
 ## Environment
 
-The current workspace has Python 3.13, Node 22/npm, and Git. MySQL Server and MySQL Workbench are not installed. Install MySQL 8 separately, then create a database/user. Workbench is optional. The app can run locally against SQLite in the meantime.
+The project uses Python 3.13, Node 22/npm, and Git. To run against MySQL 8, create a database and application user and configure `DATABASE_URL`. MySQL Workbench is optional. When `DATABASE_URL` is unset, the development app uses SQLite.
 
 ## Setup
 
@@ -21,7 +21,7 @@ From the project root in PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
-py -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r backend\requirements.txt
 cd frontend
@@ -55,9 +55,21 @@ npm.cmd run dev
 
 Open <http://localhost:5173>. Register a new account to begin; there is no preloaded demo login. The API health route is <http://127.0.0.1:5000/api/health>. The frontend `.npmrc` configures PowerShell as npm's script shell because the workspace path contains `&`.
 
+The app verifies the saved session on refresh before loading protected pages. Sessions live in the current browser tab and last up to one hour. Reopening in a new browser session requires sign-in. Signing out clears the tab's session and chat history and revokes the access token when the server is reachable.
+
 ## Optional integrations
 
-Set `OPENAI_API_KEY` and `OPENAI_MODEL` to enable provider generated guidance. Without a key, the assistant still reports deterministic account totals and a month comparison. For password recovery, configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`. Without SMTP, the request responds safely but cannot deliver the reset link.
+### Chat assistant
+
+Set `OPENAI_API_KEY` and `OPENAI_MODEL` in the backend environment for open-ended chat. Alternatively, set `GROQ_API_KEY` and `GROQ_MODEL`. Groq takes precedence when its key is set. Restart the Flask backend after changing these values and open the AI assistant in the app.
+
+General questions go to the configured provider without querying transaction records. Mixed questions and personalized advice use the backend's calculations. By default, the application keeps calculated account figures local. Set `AI_SHARE_FINANCIAL_SUMMARIES=true` only if you intend the provider to receive selected calculated summaries. When the provider is unavailable, account calculations and a limited set of general explanations still work.
+
+Try “What is money?”, “How much did I spend this month?”, or “Explain inflation and show my expenses.” Account answers use the database selected by `DATABASE_URL`. The MySQL connection uses the existing schema in `database/schema.sql`.
+
+For a spending breakdown, ask “In which areas did I spend my money in September?” You can follow it with “What about food?” and “Show the transactions.” A named month uses the current year unless a year was established in the conversation. For a specific date range, use “Show transactions from 2026-09-01 to 2026-09-30.” Both dates are included.
+
+For password recovery, configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`. Without SMTP, the request responds safely but cannot deliver the reset link.
 
 For production rate limiting, use a shared Redis service and set `RATELIMIT_STORAGE_URI`; `memory://` is suitable only for local development. Never commit secrets.
 
@@ -71,6 +83,7 @@ From the project root:
 
 ```powershell
 $env:PYTHONPATH = "backend"
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest backend\tests -q
 cd frontend
 npm.cmd run test -- --run
@@ -79,4 +92,4 @@ npm.cmd run build
 
 ## Deployment status
 
-Hosting, a managed MySQL instance, production email, and a provider API key are not configured here. Configure production secrets, Redis-backed rate limits, database migrations, HTTPS, trusted CORS origins, and health checks before deployment. Public deployment and external account actions require explicit approval.
+See the [production-readiness audit and Render runbook](docs/production-audit.md) for the deployment commands, environment settings, and database migration checks.

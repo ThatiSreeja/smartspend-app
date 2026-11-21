@@ -6,9 +6,10 @@ All routes are prefixed by `/api`. Protected routes require `Authorization: Bear
 
 - `POST /auth/register` with `{name,email,password}` creates an account and its standard categories, returning `{user,access_token}`.
 - `POST /auth/login` with `{email,password}` returns `{user,access_token}`.
+- `POST /auth/logout` with an empty JSON object and the current bearer token revokes that token and returns `204`. Other sessions for the same account remain valid.
 - `GET /auth/me` returns the authenticated user.
 - `POST /auth/forgot-password` with `{email}` requests a time-limited reset email. SMTP must be configured.
-- `POST /auth/reset-password` with `{token,password}` changes the password.
+- `POST /auth/reset-password` with `{token,password}` consumes the reset token and changes the password. Password changes invalidate old access tokens.
 - `PUT /profile` updates name, email, and currency; `PUT /profile/password` changes a password.
 
 ## Finance data
@@ -16,9 +17,9 @@ All routes are prefixed by `/api`. Protected routes require `Authorization: Bear
 - `GET/POST /categories`; `DELETE /categories/:id` manages user categories.
 - `GET/POST /transactions`; `PUT/DELETE /transactions/:id` manage transactions. List filters include `search`, `type`, `category_id`, `from`, `to`, `page`, and `per_page`.
 - `GET/POST /budgets`; `DELETE /budgets/:id` manages a monthly category budget. Posting an existing category and period updates it.
-- `GET /dashboard?month=1..12|all&year=YYYY` returns period totals, previous period, category totals, and recent entries.
+- `GET /dashboard?month=1..12|all&year=YYYY` returns period totals, previous period, monthly chart data, category totals, and recent entries.
 - `GET /reports?month=1..12|all&year=YYYY` returns totals and category counts; `GET /reports/export` returns CSV.
-- `POST /ai/ask` with `{question}` sends server-aggregated data for the signed-in user to the configured provider. Without a key it returns local summary data.
-- `GET /api/health` returns service status.
+- `POST /chat/message` with `{question,history}` returns `{answer,display}` when there is structured financial data. `history` is an optional array of up to eight previous questions. `POST /ai/ask` is supported for older clients. Both endpoints default to keeping calculated account data local.
+- `GET /health` returns service liveness. `GET /ready` checks the database and, in production, shared rate-limit storage.
 
 Registration, login, reset requests, and reset completion are rate limited. Every record lookup is scoped to the authenticated user.
