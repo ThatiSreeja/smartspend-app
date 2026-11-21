@@ -9,8 +9,8 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_urlsafe(48)
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(48)
     database_url = os.getenv("DATABASE_URL", "sqlite:///smartspend-dev.db")
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    if database_url.startswith(("postgres://", "postgresql://")):
+        database_url = "postgresql+psycopg://" + database_url.split("://", 1)[1]
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_ACCESS_TOKEN_EXPIRES = 60 * 60

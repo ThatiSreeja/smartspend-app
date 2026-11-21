@@ -23,19 +23,25 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: FRONTEND_ORIGIN
-        value: https://smartspend.onrender.com
+        fromService:
+          name: smartspend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: AUTO_CREATE_TABLES
         value: "true"
 
   - type: web
     name: smartspend
     runtime: static
-    buildCommand: cd frontend && npm install && npm run build
+    buildCommand: cd frontend && export npm_config_script_shell=/bin/sh && npm ci && npm run build
     staticPublishPath: frontend/dist
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
-      - key: VITE_API_URL
-        value: https://smartspend-api.onrender.com/api
+      - key: VITE_RENDER_API_ORIGIN
+        fromService:
+          name: smartspend-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL

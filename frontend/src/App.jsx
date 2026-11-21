@@ -4,7 +4,10 @@ import axios from 'axios';
 import { Activity, ArrowDownLeft, ArrowUpRight, Bell, Bot, BriefcaseBusiness, CarFront, ChevronDown, CircleHelp, CreditCard, Home, LogOut, Plus, Search, Settings, ShoppingBag, Utensils, Wallet, X } from 'lucide-react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api' });
+const renderApiOrigin = import.meta.env.VITE_RENDER_API_ORIGIN;
+const api = axios.create({
+  baseURL: renderApiOrigin ? `${renderApiOrigin}/api` : (import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api'),
+});
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('smartspend_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
