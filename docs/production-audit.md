@@ -1,8 +1,8 @@
-﻿# SmartSpend production-readiness audit
+# SmartSpend production-readiness audit
 
 ## Scope and baseline
 
-Reviewed the React/Vite client, Flask routes and models, chatbot routing and analytics, migrations, MySQL schema, environment templates, dependency manifests, Git remotes, and Render Blueprint. The checkout tracks the replacement GitHub repository on master. It has no GitHub Actions workflow. Local baseline passed 14 backend tests, seven frontend tests, the frontend production build, and pip check. npm's production advisory scan returned zero advisories at the time of testing.
+Reviewed the React/Vite client, Flask routes and models, chatbot routing and analytics, migrations, MySQL schema, environment templates, dependency manifests, Git remotes, and Render Blueprint. The release repository uses the main branch. It has no GitHub Actions workflow. Local baseline passed 14 backend tests, seven frontend tests, the frontend production build, and pip check. npm's production advisory scan returned zero advisories at the time of testing.
 
 ## Findings before fixes
 
@@ -58,7 +58,7 @@ Reviewed the React/Vite client, Flask routes and models, chatbot routing and ana
 
 ## Render release runbook
 
-1. Confirm the existing Render web service and static site both track `ThatiSreeja/smartspend-app`, branch `master`. Confirm the linked Blueprint and disable its Auto Sync before pushing if a push must not trigger a change. Keep the existing services and database. The local Blueprint sets service auto-deploy to off. The paid API plan and its cost require approval. [Render Blueprint management](https://render.com/docs/infrastructure-as-code)
+1. Confirm the existing Render web service and static site both track `ThatiSreeja/smartspend-app`, branch `main`. Confirm the linked Blueprint and disable its Auto Sync before pushing if a push must not trigger a change. Keep the existing services and database. The local Blueprint sets service auto-deploy to off. The paid API plan and its cost require approval. [Render Blueprint management](https://render.com/docs/infrastructure-as-code)
 2. Confirm the existing database engine, reachability, durable plan, and backup or restore point. If the original free Postgres database has expired, recover from a retained backup; a new empty database will not restore user history. Keep the current engine and use the correct existing connection URL. For managed Render Postgres, use its internal URL in the same region. [Render free-instance limits](https://render.com/docs/free)
 3. On a restored staging copy, run `python -m flask --app run db current` from `backend` with automatic table creation disabled. For a versioned database, rehearse `db upgrade` and compare record counts. If tables exist without `alembic_version`, inspect every table and column against a known revision before deciding whether to stamp. Stamp only the revision whose schema actually matches. Resolve partially applied or divergent migrations on the copy before touching production.
 4. Configure the environment below on both existing services. Confirm the protected branch and green GitHub checks. Use the existing Blueprint's manual sync or apply the equivalent settings in the Render Dashboard only after approval. The new Blueprint intentionally leaves datastore selection to the operator. Removing the original datastore definition from this Blueprint does not delete that datastore. [Render Blueprint management](https://render.com/docs/infrastructure-as-code)

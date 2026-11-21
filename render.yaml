@@ -2,7 +2,7 @@
   - type: web
     name: smartspend-api
     repo: https://github.com/ThatiSreeja/smartspend-app
-    branch: master
+    branch: main
     runtime: python
     plan: starter
     autoDeployTrigger: "off"
@@ -36,7 +36,7 @@
   - type: web
     name: smartspend
     repo: https://github.com/ThatiSreeja/smartspend-app
-    branch: master
+    branch: main
     runtime: static
     autoDeployTrigger: "off"
     buildCommand: test -n "$VITE_RENDER_API_ORIGIN" && cd frontend && export npm_config_script_shell=/bin/sh && npm ci --include=dev && npm run build
