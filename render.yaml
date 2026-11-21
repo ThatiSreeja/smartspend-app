@@ -6,6 +6,7 @@ databases:
 services:
   - type: web
     name: smartspend-api
+    repo: https://github.com/ThatiSreeja/smartspend-app
     runtime: python
     plan: free
     buildCommand: pip install -r backend/requirements.txt
@@ -32,6 +33,7 @@ services:
 
   - type: web
     name: smartspend
+    repo: https://github.com/ThatiSreeja/smartspend-app
     runtime: static
     buildCommand: cd frontend && export npm_config_script_shell=/bin/sh && npm ci && npm run build
     staticPublishPath: frontend/dist
