@@ -4,11 +4,10 @@
     repo: https://github.com/ThatiSreeja/smartspend-app
     branch: main
     runtime: python
-    plan: starter
+    plan: free
     autoDeployTrigger: "off"
     buildCommand: python -m pip install -r backend/requirements.txt
-    preDeployCommand: cd backend && python -m flask --app run db upgrade
-    startCommand: cd backend && gunicorn --workers 2 --threads 2 --bind 0.0.0.0:$PORT run:app
+    startCommand: cd backend && python -m flask --app run db upgrade && exec gunicorn --workers 2 --threads 2 --bind 0.0.0.0:$PORT run:app
     healthCheckPath: /api/ready
     envVars:
       - key: PYTHON_VERSION
@@ -16,9 +15,14 @@
       - key: SMARTSPEND_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: smartspend-db
+          property: connectionString
       - key: RATELIMIT_STORAGE_URI
-        sync: false
+        fromService:
+          name: smartspend-ratelimit
+          type: keyvalue
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: JWT_SECRET_KEY
@@ -63,3 +67,13 @@
           name: smartspend-api
           type: web
           envVarKey: RENDER_EXTERNAL_URL
+
+  - type: keyvalue
+    name: smartspend-ratelimit
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: smartspend-db
+    plan: free
+    ipAllowList: []
